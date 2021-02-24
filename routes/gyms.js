@@ -1,38 +1,27 @@
 const express = require("express");
-const controller = require("../controllers/gyms");
 const router = express.Router();
-const upload = require("../middleware/multer");
 const passport = require("passport");
+const controller = require("../controllers/gyms");
+const upload = require("../middleware/multer");
 
 router.param("gymId", async (req, res, next, gymId) => {
-  console.log("hi");
-  const gymFound = await controller.fetchGym(gymId, next);
-  if (gymFound) {
-    req.gym = gymFound;
-    console.log(req.gym);
-
+  const foundGym = await controller.fetchGym(gymId, next);
+  if (foundGym) {
+    req.gym = foundGym;
     next();
-  } else {
-    console.log("bey");
-    const error = new Error("Gym Not Found");
-    error.status = 404;
-    next(error);
-  }
+  } else next({ status: 404, message: "Gym Not Found" });
 });
 
-router.get("/", controller.gymList);
-router.post(
-  "/",
-  upload.single("image"),
-  passport.authenticate("jwt", { session: false }),
-  controller.gymCreate
-);
+router.get("/", controller.fetchGyms);
 
-router.post(
-  "/:gymId/classes",
-  passport.authenticate("jwt", { session: false }),
-  upload.single("image"),
-  controller.classCreate
-);
+router.post("/", upload.single("image"), controller.createGym);
+
+router.get("/:gymId", controller.gymDetail);
+
+router.put("/:gymId", upload.single("image"), controller.updateGym);
+
+router.delete("/:gymId", controller.deleteGym);
+
+router.post("/:gymId/classes", upload.single("image"), controller.createClass);
 
 module.exports = router;

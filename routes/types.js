@@ -1,41 +1,25 @@
 const express = require("express");
-const controller = require("../controllers/types");
 const router = express.Router();
-const upload = require("../middleware/multer");
 const passport = require("passport");
+const controller = require("../controllers/types");
+const upload = require("../middleware/multer");
 
 router.param("typeId", async (req, res, next, typeId) => {
-  const typeFound = await controller.fetchType(typeId, next);
-  if (typeFound) {
-    req.type = typeFound;
+  const foundType = await controller.fetchType(typeId, next);
+  if (foundType) {
+    req.type = foundType;
     next();
-  } else {
-    const error = new Error("Type Not Found");
-    error.status = 404;
-    next(error);
-  }
+  } else next({ status: 404, message: "Type Not Found" });
 });
 
-// single: uploading one image only
-// "image": the name of the model field where we want to save the image
+router.get("/", controller.fetchTypes);
 
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  controller.typeList
-);
+router.post("/", controller.createType);
+
 router.get("/:typeId", controller.typeDetail);
 
-router.put(
-  "/:typeId",
-  passport.authenticate("jwt", { session: false }),
-  upload.single("image"),
-  controller.typeUpdate
-);
-router.delete(
-  "/:typeId",
-  passport.authenticate("jwt", { session: false }),
-  controller.typeDelete
-);
+router.put("/:typeId", controller.updateType);
+
+router.delete("/:typeId", controller.deleteType);
 
 module.exports = router;
